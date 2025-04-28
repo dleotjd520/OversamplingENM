@@ -1,0 +1,57 @@
+###########################################################  
+###########################################################  3. Sensitivity analysis: Variable importance-based distance between models
+library(reshape2)
+
+### Variable importance-based distance function
+# Input data description: 
+# (1) DB: Variable importance database for the models, which use the same ENM and presence proportion (format: data.frame).
+# (2) VR: Number of top variables to use (e.g., VR = 5: use top 5 variables).
+
+varimp.dist <- function(DBt, VR = 5){ 
+  ### Mean of variable importance over 10 repetitions (K)
+  mean.DB <- aggregate(DB, dropout_loss ~ variable + ENM + Oversampling + Proportion, mean) 
+  
+  ##### Distance calculation
+  # Top 5 variables based on the Baseline model (in descending order of importance)
+  enm.BM <- mean.DB[mean.DB$Oversampling == "Baseline", ]
+  Bm.T5 <- enm.BM$variable[order(enm.BM$dropout_loss, decreasing = T)[1:VR] ]
+  
+  
+  # Row-wise descending rank DB (rank 1 = largest value)
+  td1 <- dcast(mean.DB, ENM+Proportion + Oversampling ~ variable, value.var = "dropout_loss")
+  DF.rank <- as.data.frame(t(apply(td1[4:11], 1, function(x) rank(-x, ties.method = "first")))) 
+  rownames(DF.rank) <- td1$Oversampling
+
+  # Weighted Euclidean distance function (using the 'Basline' row as reference)
+  weighted.Euclidean.dist <- function(df, weights) {
+    if(length(weights) != ncol(df)) {
+      stop("Weight vector length must equal number of dataframe columns.")
+    }
+    
+    DF.ref <- as.numeric(df[rownames(df) == "Baseline", ])
+    DF.other <-df[rownames(df) != "Baseline", ]
+    
+    # Compute weighted Euclidean distance between ref and each row from the second onward.
+    WED <- apply(DF.other, 1, function(row) {
+      sqrt(sum(weights * (as.numeric(row) - DF.ref)^2))
+    })
+    return(WED)
+  }
+  
+  # Weights based on variable ranks (simple inverse rank)
+  weights <- c(1/(1:VR)) 
+  
+  # Distance matrix
+  dist.matrix <- weighted.Euclidean.dist(DF.rank[Bm.T5], weights)
+
+  Result.DF <- data.frame("ENM"= unique(DB$ENM), "Proportion"= unique(DB$Proportion), "Oversampling"= names(dist.matrix), "dist"= dist.matrix)
+  return(Result.DF)
+}
+# Output description:
+# Distance from the baseline for each ENM with applied oversampling (format: data.frame).
+
+### Sample code 
+DB <- read.csv("Sample data.R3_Baetis fuscatus_0.20.csv", fileEncoding = "EUC-KR")
+head(DB)
+
+varimp.dist(DB)

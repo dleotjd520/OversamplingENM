@@ -12,7 +12,7 @@ Descriptions of each R script (C1–C5; format: R) and sample data file (formats
 
 
 
-\**# (R) C1. Data preprocessing function**
+**# (R) C1. Data preprocessing function**
 
 -1.1. Outlier detection using Hampel filter
 

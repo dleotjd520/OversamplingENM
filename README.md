@@ -1,1 +1,1 @@
-**This folder contains an example R script and data files for the study titled "Effects of Oversampling on Ecological Niche Modeling Using Imbalanced Data," which is currently under review in Methods in Ecology and Evolution.**
+**This folder contains an example R script and data files for the study titled "Effects of Oversampling on Ecological Niche Modeling Using Imbalanced Data," which is currently under review in _Methods in Ecology and Evolution_.**
